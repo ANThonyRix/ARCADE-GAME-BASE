@@ -1710,56 +1710,23 @@
         resizeCanvas();
     </script>
 
-    <div id="debug-status" style="
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        background: red; 
-        color: white; 
-        z-index: 9999; 
-        text-align: center; 
-        padding: 10px; 
-        font-weight: bold;
-        font-family: monospace;">
-        ⏳ ЗАГРУЗКА SDK...
-    </div>
-
-    <script type="module">
-        // 1. Импортируем SDK как современный модуль (это надежнее)
-        import { sdk } from 'https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk@latest/+esm';
-
-        const debugEl = document.getElementById('debug-status');
-
-        // 2. Функция запуска
-        const initializeSDK = async () => {
-            try {
-                // Сообщаем приложению, что мы готовы
-                await sdk.actions.ready();
-                
-                // Если мы здесь — значит ошибок не было
-                debugEl.style.backgroundColor = 'green';
-                debugEl.innerText = '✅ SUCCESS: Ready() sent!';
-                
-                // Скрываем панель через 2 секунды, чтобы не мешала играть
-                setTimeout(() => {
-                    debugEl.style.display = 'none';
-                }, 2000);
-                
-            } catch (error) {
-                // Если ошибка — показываем её на экране
-                debugEl.style.backgroundColor = 'orange';
-                debugEl.innerText = '❌ ERROR: ' + error.message;
-                console.error('SDK Error:', error);
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+    <script>
+        const waitForSDK = setInterval(() => {
+            if (window.farcaster) {
+                clearInterval(waitForSDK);
+                console.log("Farcaster SDK found!");
+                try {
+                    window.farcaster.actions.ready();
+                    console.log("Called ready()");
+                } catch (e) {
+                    console.error("Error calling ready:", e);
+                }
             }
-        };
-
-        // 3. Запускаем сразу после загрузки SDK
-        if (sdk) {
-            initializeSDK();
-        } else {
-            debugEl.innerText = '❌ FATAL: SDK Import Failed';
-        }
+        }, 100);
+        
+        // Stop checking after 5 seconds to save resources
+        setTimeout(() => clearInterval(waitForSDK), 5000);
     </script>
 </body>
 </html>
