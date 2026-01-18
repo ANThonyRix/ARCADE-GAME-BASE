@@ -1711,19 +1711,26 @@
         // Initial resize
         resizeCanvas();
     </script>
-<script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
 
-<script>
-  window.addEventListener('load', async () => {
-    if (window.farcaster) {
-      console.log("Farcaster SDK is loaded");
-      setTimeout(() => {
-          window.farcaster.actions.ready(); 
-      }, 500);
-    }
-  });
+<script type="module">
+    // Импортируем SDK напрямую как модуль
+    import sdk from 'https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js';
+
+    // Как только страница загрузилась...
+    window.addEventListener('load', () => {
+        console.log("Попытка вызвать ready()...");
+        
+        // Даем небольшую задержку для гарантии и отправляем сигнал
+        setTimeout(() => {
+            try {
+                sdk.actions.ready();
+                console.log("Ready() вызван успешно!");
+            } catch (e) {
+                console.error("Ошибка вызова ready:", e);
+            }
+        }, 500);
+    });
 </script>
 </body>
-
 </html>
-
