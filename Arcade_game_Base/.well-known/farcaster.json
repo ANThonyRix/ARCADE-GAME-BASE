@@ -15,3 +15,16 @@
     "splashBackgroundColor": "#000000"
   }
 }
+{
+  "frame": {
+    "name": "Arcade Game Base",
+    "version": "1",
+    "iconUrl": "https://arcade-game-topaz.vercel.app/icon.png",
+    "homeUrl": "https://arcade-game-topaz.vercel.app",
+    "description": "Arcade Game Base is a fast-paced arcade game on the Base network, where speed is everything. Players compete to deliver transactions to a block in one second, using retro styling and blockchain mechanics for maximum hype.",
+    "subtitle": "Deliver your transaction to a block in 1 second!",
+    "primaryCategory": "games",
+    "splashImageUrl": "https://arcade-game-topaz.vercel.app/icon.png",
+    "splashBackgroundColor": "#6200EA"
+  }
+}
