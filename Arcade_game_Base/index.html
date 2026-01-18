@@ -1711,5 +1711,22 @@
         // Initial resize
         resizeCanvas();
     </script>
+<script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+
+<script>
+  // 2. Говорим приложению: "Я загрузился, покажи меня!"
+  window.addEventListener('load', async () => {
+    if (window.farcaster) {
+      console.log("Farcaster SDK is loaded");
+      
+      // Вызываем команду ready(), чтобы убрать заставку загрузки
+      // Небольшая задержка (500мс) нужна для плавности
+      setTimeout(() => {
+          window.farcaster.actions.ready(); 
+      }, 500);
+    }
+  });
+</script>
 </body>
+
 </html>
