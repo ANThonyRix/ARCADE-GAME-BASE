@@ -9,29 +9,12 @@
 
     <script>
         window.addEventListener('load', () => {
-            // В документации сказано: доступ через глобальный объект 'miniapp'
             if (window.miniapp && window.miniapp.sdk) {
-                console.log("✅ SDK найден (window.miniapp.sdk)");
-                
                 try {
-                    // Правильный вызов для нового SDK
                     window.miniapp.sdk.actions.ready();
-                    console.log("✅ Команда ready() отправлена!");
-                    
-                    // Показываем зеленую плашку успеха
-                    const debugEl = document.getElementById('debug-status');
-                    if(debugEl) {
-                        debugEl.style.backgroundColor = 'green';
-                        debugEl.innerText = 'SUCCESS: miniapp.sdk connected!';
-                        setTimeout(() => debugEl.style.display = 'none', 2000);
-                    }
                 } catch (e) {
-                    console.error("❌ Ошибка при вызове ready:", e);
+                    console.error("SDK Error:", e);
                 }
-            } else {
-                console.error("❌ Объект 'miniapp' не найден");
-                const debugEl = document.getElementById('debug-status');
-                if(debugEl) debugEl.innerText = 'ERROR: window.miniapp not found';
             }
         });
     </script>
@@ -829,21 +812,6 @@
             <div id="leaderboardList"></div>
             <button onclick="closeLeaderboard()">⬅️ Back</button>
         </div>
-    </div>
-
-    <div id="debug-status" style="
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        background: red; 
-        color: white; 
-        z-index: 9999; 
-        text-align: center; 
-        padding: 10px; 
-        font-weight: bold;
-        font-family: monospace;">
-        ⏳ ЗАГРУЗКА SDK...
     </div>
 
     <audio id="bgMusic" loop>
