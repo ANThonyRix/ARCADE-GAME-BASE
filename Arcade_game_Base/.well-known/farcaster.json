@@ -1,1 +1,17 @@
-
+{
+  "accountAssociation": {
+    "header": "eyJmaW...", 
+    "payload": "eyJkb2...", 
+    "signature": "MHg..."
+  },
+  "frame": {
+    "version": "1",
+    "name": "Arcade Game Base",
+    "iconUrl": "https://arcade-game-topaz.vercel.app/icon.png",
+    "homeUrl": "https://arcade-game-topaz.vercel.app/",
+    "imageUrl": "https://arcade-game-topaz.vercel.app/splash-screen.png",
+    "buttonTitle": "Играть сейчас",
+    "splashImageUrl": "https://arcade-game-topaz.vercel.app/splash-screen.png",
+    "splashBackgroundColor": "#000000"
+  }
+}
