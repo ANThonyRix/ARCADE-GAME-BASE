@@ -806,6 +806,21 @@
         </div>
     </div>
 
+    <div id="debug-status" style="
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        background: red; 
+        color: white; 
+        z-index: 9999; 
+        text-align: center; 
+        padding: 10px; 
+        font-weight: bold;
+        font-family: monospace;">
+        ⏳ ЗАГРУЗКА SDK...
+    </div>
+
     <audio id="bgMusic" loop>
         <source src="https://anthonyrix.github.io/audio/chain-runner.mp3" type="audio/mpeg">
     </audio>
@@ -1712,6 +1727,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
     <script>
+        const debugEl = document.getElementById('debug-status');
+        
+        // Проверка готовности SDK каждые 100 мс (Polling)
         const waitForSDK = setInterval(() => {
             if (window.farcaster) {
                 clearInterval(waitForSDK);
@@ -1719,14 +1737,28 @@
                 try {
                     window.farcaster.actions.ready();
                     console.log("Called ready()");
+                    
+                    // Обновляем плашку
+                    if(debugEl) {
+                        debugEl.style.backgroundColor = 'green';
+                        debugEl.innerText = '✅ SUCCESS: Classic Mode Ready!';
+                        // Скрываем через 2 секунды
+                        setTimeout(() => { debugEl.style.display = 'none'; }, 2000);
+                    }
                 } catch (e) {
                     console.error("Error calling ready:", e);
+                    if(debugEl) debugEl.innerText = '❌ Error: ' + e.message;
                 }
             }
         }, 100);
         
-        // Stop checking after 5 seconds to save resources
-        setTimeout(() => clearInterval(waitForSDK), 5000);
+        // Перестаем искать через 5 секунд, чтобы не грузить браузер вечно
+        setTimeout(() => {
+            clearInterval(waitForSDK);
+            if(debugEl && debugEl.innerText.includes('ЗАГРУЗКА')) {
+                 debugEl.innerText = '⚠️ SDK Timeout (Classic Mode)';
+            }
+        }, 5000);
     </script>
 </body>
 </html>
