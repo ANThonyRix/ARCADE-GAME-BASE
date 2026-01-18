@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "eyJmaW...", 
-    "payload": "eyJkb2...", 
-    "signature": "MHg..."
+    "header": "", 
+    "payload": "", 
+    "signature": ""
   },
   "frame": {
     "version": "1",
