@@ -5,22 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+
     <script>
-        // Запускаем ready() сразу же, как только загрузится SDK
-        // Не ждем загрузки картинок или игры
-        window.document.addEventListener('DOMContentLoaded', function() {
-            if (window.farcaster) {
-                console.log("SDK loaded in HEAD");
+        window.addEventListener('load', () => {
+            // В документации сказано: доступ через глобальный объект 'miniapp'
+            if (window.miniapp && window.miniapp.sdk) {
+                console.log("✅ SDK найден (window.miniapp.sdk)");
+                
                 try {
-                    window.farcaster.actions.ready();
-                    console.log("Ready called successfully");
+                    // Правильный вызов для нового SDK
+                    window.miniapp.sdk.actions.ready();
+                    console.log("✅ Команда ready() отправлена!");
+                    
+                    // Показываем зеленую плашку успеха
+                    const debugEl = document.getElementById('debug-status');
+                    if(debugEl) {
+                        debugEl.style.backgroundColor = 'green';
+                        debugEl.innerText = 'SUCCESS: miniapp.sdk connected!';
+                        setTimeout(() => debugEl.style.display = 'none', 2000);
+                    }
                 } catch (e) {
-                    console.error("SDK Error:", e);
+                    console.error("❌ Ошибка при вызове ready:", e);
                 }
+            } else {
+                console.error("❌ Объект 'miniapp' не найден");
+                const debugEl = document.getElementById('debug-status');
+                if(debugEl) debugEl.innerText = 'ERROR: window.miniapp not found';
             }
         });
     </script>
+
     <style>
         :root {
             --safe-top: env(safe-area-inset-top, 0px);
@@ -47,7 +62,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100svh; /* Правильная высота для мобильных */
+            height: 100svh;
             overflow: hidden;
         }
 
@@ -64,13 +79,12 @@
             margin: auto;
         }
 
-        /* Адаптивность для мобильных */
         @media (max-width: 820px) {
             #gameContainer {
                 width: 100vw;
                 height: 100svh;
                 max-height: 100svh;
-                aspect-ratio: auto; /* Занимаем весь экран */
+                aspect-ratio: auto;
                 border-radius: 0;
             }
         }
@@ -81,7 +95,6 @@
             height: 100%;
         }
 
-        /* Экраны меню (Start, Game Over и т.д.) */
         #startScreen, #gameOverScreen, #shopScreen, #pauseScreen, #faqScreen, #leaderboardScreen {
             position: absolute;
             top: 0;
@@ -103,7 +116,6 @@
             display: none !important;
         }
 
-        /* Анимация фона */
         #startScreen::before {
             content: '';
             position: absolute;
@@ -124,7 +136,6 @@
             50% { opacity: 1; }
         }
 
-        /* UI Styles с учетом Safe Area и адаптива */
         .top-ui {
             position: absolute;
             top: calc(12px + var(--safe-top));
@@ -204,17 +215,16 @@
             white-space: nowrap;
         }
 
-        /* Мобильные кнопки управления */
         #mobileControls {
             position: absolute;
             bottom: calc(16px + var(--safe-bottom));
             left: 0;
             width: 100%;
-            display: none; /* Скрыто по умолчанию, включается JS */
+            display: none;
             justify-content: space-between;
             padding: 0 calc(18px + var(--safe-left)) 0 calc(18px + var(--safe-right));
             z-index: 50;
-            pointer-events: none; /* Чтобы клики проходили сквозь контейнер */
+            pointer-events: none;
         }
 
         .mobile-btn {
@@ -232,7 +242,7 @@
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            pointer-events: auto; /* Кнопки кликабельны */
+            pointer-events: auto;
         }
 
         .mobile-btn:active {
@@ -245,7 +255,6 @@
             border-color: #FFD700;
         }
 
-        /* Main menu Styles */
         .main-menu {
             display: flex;
             flex-direction: column;
@@ -265,7 +274,6 @@
             position: relative;
         }
 
-        /* Neon glow around menu */
         .main-menu::before {
             content: '';
             position: absolute;
@@ -821,6 +829,21 @@
             <div id="leaderboardList"></div>
             <button onclick="closeLeaderboard()">⬅️ Back</button>
         </div>
+    </div>
+
+    <div id="debug-status" style="
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        background: red; 
+        color: white; 
+        z-index: 9999; 
+        text-align: center; 
+        padding: 10px; 
+        font-weight: bold;
+        font-family: monospace;">
+        ⏳ ЗАГРУЗКА SDK...
     </div>
 
     <audio id="bgMusic" loop>
