@@ -14,34 +14,31 @@
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
 
     <script>
-        // Этот скрипт будет искать SDK каждые 100мс, пока не найдет
-        const initSDK = setInterval(() => {
-            console.log("🔍 Поиск SDK...");
-            
-            // Проверяем глобальный объект farcaster (стандарт для frame-sdk)
-            if (window.farcaster) {
-                clearInterval(initSDK);
-                console.log("✅ SDK найден (window.farcaster)!");
+        window.addEventListener('load', () => {
+            console.log("Страница загружена, ищем SDK...");
+
+            // В документации сказано: доступ через глобальный объект 'miniapp'
+            if (window.miniapp && window.miniapp.sdk) {
+                console.log("✅ SDK найден (window.miniapp.sdk)");
                 
                 try {
-                    // Вызываем ready()
-                    window.farcaster.actions.ready();
-                    console.log("✅ COMMAND SENT: ready()");
+                    // Единственно верный вызов для Mini Apps
+                    window.miniapp.sdk.actions.ready();
+                    console.log("🚀 Команда ready() успешно отправлена!");
                 } catch (e) {
-                    console.error("❌ Ошибка вызова ready:", e);
+                    console.error("❌ Ошибка при вызове ready:", e);
                 }
+            } else {
+                console.error("❌ Критическая ошибка: Объект 'miniapp' не найден. Скрипт SDK не загрузился.");
             }
-        }, 100);
-
-        // Отключаем поиск через 5 секунд, если не нашли (чтобы не грузить телефон)
-        setTimeout(() => clearInterval(initSDK), 5000);
+        });
     </script>
 
     <style>
-        /* ВАШИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) */
+        /* === ВАШИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) === */
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; display: flex; justify-content: center; align-items: center; height: 100svh; overflow: hidden; }
