@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
 
     <meta property="og:title" content="Arcade Game Base">
@@ -9,26 +10,24 @@
     <meta property="og:image" content="https://arcade-game-topaz.vercel.app/image.png">
     <meta name="fc:frame" content="vNext">
     <meta name="fc:frame:image" content="https://arcade-game-topaz.vercel.app/image.png">
-    <meta name="fc:frame:button:1" content="Play">
+    <meta name="fc:frame:button:1" content="Play Game 🚀">
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
-    <meta name="viewport" content="..."> 
-    <title>Arcade Game Base</title>
+    <script type="module">
+        // Импортируем SDK напрямую. Это работает всегда.
+        import sdk from 'https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js';
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
-
-    <script>
-        window.addEventListener('load', () => {
-            if (window.miniapp && window.miniapp.sdk) {
-                try {
-                    window.miniapp.sdk.actions.ready();
-                } catch (e) {
-                    console.error("SDK Error:", e);
-                }
-            }
-        });
+        // Запускаем сразу после загрузки скрипта
+        console.log("SDK Module Loaded");
+        
+        try {
+            // Сообщаем Warpcast, что мы загрузились
+            sdk.actions.ready();
+            console.log("✅ SDK Ready called via Module!");
+        } catch (e) {
+            console.error("SDK Error:", e);
+        }
     </script>
-
     <style>
         :root {
             --safe-top: env(safe-area-inset-top, 0px);
@@ -1729,5 +1728,3 @@
     </script>
 </body>
 </html>
-
-
