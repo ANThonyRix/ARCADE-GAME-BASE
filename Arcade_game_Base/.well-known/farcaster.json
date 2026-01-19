@@ -4,16 +4,17 @@
     "version": "1",
     "iconUrl": "https://arcade-game-topaz.vercel.app/icon.png",
     "homeUrl": "https://arcade-game-topaz.vercel.app",
-    "heroImageUrl": "https://arcade-game-topaz.vercel.app/icon.png",
-    "splashImageUrl": "https://arcade-game-topaz.vercel.app/icon.png",
+    "imageUrl": "https://arcade-game-topaz.vercel.app/image.png",
+    "splashImageUrl": "https://arcade-game-topaz.vercel.app/splash.png",
     "splashBackgroundColor": "#6200EA",
-    "primaryCategory": "games",
+    "webhookUrl": "https://arcade-game-topaz.vercel.app/api/webhook",
     "subtitle": "Deliver your transaction to a block in 1 second!",
-    "description": "Arcade Game Base is a fast-paced arcade game on the Base network, where speed is everything. Players compete to deliver transactions to a block in one second, using retro styling and blockchain mechanics for maximum hype."
+    "description": "Arcade Game Base is a fast-paced arcade game on the Base network, where speed is everything. Players compete to deliver transactions to a block in one second, using retro styling and blockchain mechanics for maximum hype.",
+    "primaryCategory": "games"
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjU3NDk4NCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDg2YTU5RDdGMjhBQzdDNjBFMzBiNDA4ZjkxNmM1YTQyYUI3NjVENjkifQ",
-    "payload": "eyJkb21haW4iOiIifQ",
-    "signature": "j2fOjeHMI5AoO+1JgoSLUZsUZx6+v0t91xnDQmwvkigRrLGBb/FzwlWRHTCiFspSP5POmQEpkcQ4ff+Ayzsa5hw="
+    "payload": "eyJkb21haW4iOiJhcmNhZGUtZ2FtZS10b3Bhei52ZXJjZWwuYXBwIn0",
+    "signature": "63ICIxdJUlebA2dfRFZ4Sj+5hJuamYxoRJn7OSdLUSRw35rEd9NkPkn+lzzV3FLWyM2/zAm0WAIh62QLRf2rHhw="
   }
 }
