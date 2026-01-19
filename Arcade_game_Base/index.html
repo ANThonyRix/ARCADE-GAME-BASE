@@ -14,42 +14,34 @@
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+
     <script>
-        // Этот код будет "долбить" проверку, пока SDK не загрузится
-        // Это решает проблему "Ready not called"
-        (function() {
-            console.log("🚀 Запуск инициализации SDK...");
+        // Этот скрипт будет искать SDK каждые 100мс, пока не найдет
+        const initSDK = setInterval(() => {
+            console.log("🔍 Поиск SDK...");
             
-            var attempts = 0;
-            var sdkInterval = setInterval(function() {
-                attempts++;
+            // Проверяем глобальный объект farcaster (стандарт для frame-sdk)
+            if (window.farcaster) {
+                clearInterval(initSDK);
+                console.log("✅ SDK найден (window.farcaster)!");
                 
-                // Проверяем, появился ли объект miniapp
-                if (window.miniapp && window.miniapp.sdk) {
-                    clearInterval(sdkInterval);
-                    console.log("✅ SDK найден (window.miniapp)!");
-                    try {
-                        window.miniapp.sdk.actions.ready();
-                        console.log("✅ ready() успешно вызван!");
-                    } catch (e) {
-                        console.error("Ошибка вызова ready:", e);
-                    }
-                    return;
+                try {
+                    // Вызываем ready()
+                    window.farcaster.actions.ready();
+                    console.log("✅ COMMAND SENT: ready()");
+                } catch (e) {
+                    console.error("❌ Ошибка вызова ready:", e);
                 }
-                
-                // Останавливаемся через 10 секунд (чтобы не грузить телефон)
-                if (attempts > 100) {
-                    clearInterval(sdkInterval);
-                    console.error("❌ Не удалось найти SDK за 10 секунд");
-                }
-            }, 100); // Проверять каждые 100 миллисекунд
-        })();
+            }
+        }, 100);
+
+        // Отключаем поиск через 5 секунд, если не нашли (чтобы не грузить телефон)
+        setTimeout(() => clearInterval(initSDK), 5000);
     </script>
 
     <style>
-        /* === СТИЛИ ИГРЫ (БЕЗ ИЗМЕНЕНИЙ) === */
+        /* ВАШИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) */
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; display: flex; justify-content: center; align-items: center; height: 100svh; overflow: hidden; }
