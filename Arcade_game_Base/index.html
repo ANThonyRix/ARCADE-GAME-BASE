@@ -19,21 +19,21 @@
 
     <script>
         window.addEventListener('load', () => {
-            console.log("Страница загружена, ищем SDK...");
+            console.log("The page is loaded, let's look for the SDK...");
 
             // В документации сказано: доступ через глобальный объект 'miniapp'
             if (window.miniapp && window.miniapp.sdk) {
-                console.log("✅ SDK найден (window.miniapp.sdk)");
+                console.log("✅ SDK found (window.miniapp.sdk)");
                 
                 try {
                     // Единственно верный вызов для Mini Apps
                     window.miniapp.sdk.actions.ready();
-                    console.log("🚀 Команда ready() успешно отправлена!");
+                    console.log("🚀 The ready() command was sent successfully!");
                 } catch (e) {
-                    console.error("❌ Ошибка при вызове ready:", e);
+                    console.error("❌ Error calling ready:", e);
                 }
             } else {
-                console.error("❌ Критическая ошибка: Объект 'miniapp' не найден. Скрипт SDK не загрузился.");
+                console.error("❌ Critical error: Object 'miniapp' not found. SDK script failed to load");
             }
         });
     </script>
@@ -1223,13 +1223,13 @@
     const btn = document.getElementById('saveOnChainBtn');
 
     if (!window.miniapp?.sdk?.wallet?.ethProvider) {
-      alert("❌ Кошелек не найден. Открой игру внутри Farcaster.");
+      alert("❌ Wallet not found. Open the game in Farcaster");
       return;
     }
 
     try {
       btn.disabled = true;
-      btn.innerText = "⏳ Проверка...";
+      btn.innerText = "⏳ Verification...";
 
       const provider = new ethers.providers.Web3Provider(window.miniapp.sdk.wallet.ethProvider);
 
@@ -1239,7 +1239,7 @@
              await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
          } catch (switchError) {
              btn.disabled = false;
-             btn.innerText = "🔗 Сохранить в блокчейн Base";
+             btn.innerText = "🔗 Save to Blockchain Base";
              alert(`❌ Неверная сеть (ID: ${chainIdHex}). Пожалуйста, переключи кошелек на Base Mainnet.`);
              return;
          }
@@ -1248,12 +1248,12 @@
       const code = await provider.getCode(CONTRACT_ADDRESS);
       if (!code || code === "0x") {
         btn.disabled = false;
-        btn.innerText = "🔗 Сохранить в блокчейн Base";
-        alert(`❌ По адресу ${CONTRACT_ADDRESS} нет контракта. Проверьте адрес и сеть деплоя.`);
+        btn.innerText = "🔗 Save to Blockchain Base";
+        alert(`❌ By address ${CONTRACT_ADDRESS} No contract. Check the deployment address and network.`);
         return;
       }
 
-      btn.innerText = "⏳ Подписываем...";
+      btn.innerText = "⏳ Let's sign...";
       await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
@@ -1263,25 +1263,25 @@
       await contract.estimateGas.saveRecord(score, cleanDistance);
 
       const tx = await contract.saveRecord(score, cleanDistance);
-      btn.innerText = "⏳ Отправка...";
+      btn.innerText = "⏳ Sending...";
 
       await tx.wait(1);
-      btn.innerText = "✅ Сохранено!";
+      btn.innerText = "✅ Saved!";
       btn.style.background = "#00FF00";
       alert(`✅ Успех! Tx: ${tx.hash}`);
 
     } catch (error) {
       console.error("Tx error:", error);
-      btn.innerText = "🔗 Сохранить в блокчейн Base"; 
+      btn.innerText = "🔗 Save to Blockchain Base"; 
       btn.disabled = false;
 
       let errorMessage = error?.message || "Неизвестная ошибка";
       if (error?.data?.message) errorMessage = error.data.message;
 
       if (error?.code === 4001) {
-        alert("❌ Вы отменили подписание транзакции.");
+        alert("❌ You have cancelled the transaction signing");
       } else {
-        alert(`❌ Ошибка: ${errorMessage}`);
+        alert(`❌ Error: ${errorMessage}`);
       }
     }
   }
@@ -1293,7 +1293,7 @@
 
       const btn = document.createElement('button');
       btn.id = "saveOnChainBtn";
-      btn.innerText = "🔗 Сохранить в блокчейн Base";
+      btn.innerText = "🔗 Save to Blockchain Base";
       btn.onclick = sendTransactionToChain;
       btn.style.background = "#0052FF";
       btn.style.color = "white";
