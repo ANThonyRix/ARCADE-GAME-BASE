@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://arcade-game-topaz.vercel.app/image.png","button":{"title":"Play Game 🚀","action":{"type":"launch_frame","name":"Arcade Game Base","url":"https://arcade-game-topaz.vercel.app","splashImageUrl":"https://arcade-game-topaz.vercel.app/image.png","splashBackgroundColor":"#000000"}}}' />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+
     <meta property="og:title" content="Arcade Game Base">
     <meta property="og:description" content="Deliver transaction in 1 second!">
     <meta property="og:image" content="https://arcade-game-topaz.vercel.app/image.png">
-    <meta name="fc:frame" content="vNext">
+    
     <meta name="fc:frame:image" content="https://arcade-game-topaz.vercel.app/image.png">
     <meta name="fc:frame:button:1" content="Play Game 🚀">
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
+
     <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
 
     <script>
@@ -1206,6 +1208,8 @@
         // Initial resize
         resizeCanvas();
     </script>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 <script>
   // ⚙️ ВСТАВЬТЕ ВАШ АДРЕС НИЖЕ ВНУТРИ КАВЫЧЕК
   const CONTRACT_ADDRESS = "0xdb68CeBcF6D1f82b976fd21024aaE0ef30B8C18a"; // <-- СЮДА (например: "0x4ed7...")
@@ -1227,13 +1231,10 @@
       btn.disabled = true;
       btn.innerText = "⏳ Проверка...";
 
-      // Инициализируем провайдер
       const provider = new ethers.providers.Web3Provider(window.miniapp.sdk.wallet.ethProvider);
 
-      // 1) Проверяем сеть (Base Mainnet = 8453 или 0x2105)
       const chainIdHex = await provider.send("eth_chainId", []);
       if (chainIdHex !== "0x2105") {
-         // Попробуем переключить сеть автоматически
          try {
              await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
          } catch (switchError) {
@@ -1244,54 +1245,36 @@
          }
       }
 
-      // 2) Проверяем, есть ли контракт по адресу
       const code = await provider.getCode(CONTRACT_ADDRESS);
       if (!code || code === "0x") {
         btn.disabled = false;
         btn.innerText = "🔗 Сохранить в блокчейн Base";
-        alert(`❌ По адресу ${CONTRACT_ADDRESS} нет контракта. Проверьте, правильно ли вы скопировали адрес из Remix.`);
+        alert(`❌ По адресу ${CONTRACT_ADDRESS} нет контракта. Проверьте адрес и сеть деплоя.`);
         return;
       }
 
       btn.innerText = "⏳ Подписываем...";
-
-      // Запрашиваем доступ к аккаунту
       await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
-
-      // Создаем объект контракта
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-      // Округляем дистанцию (Solidity не понимает дробные числа)
       const cleanDistance = Math.floor(distance);
 
-      // 3) Пробуем оценить газ (это покажет ошибку контракта до отправки)
-      try {
-          await contract.estimateGas.saveRecord(score, cleanDistance);
-      } catch (gasError) {
-          console.error("Gas Error:", gasError);
-          throw new Error("Ошибка симуляции транзакции. Возможно, контракт отклоняет запись (например, условия не выполнены).");
-      }
+      await contract.estimateGas.saveRecord(score, cleanDistance);
 
-      // Отправляем транзакцию
       const tx = await contract.saveRecord(score, cleanDistance);
       btn.innerText = "⏳ Отправка...";
-      console.log("Tx hash:", tx.hash);
 
-      // Ждем 1 подтверждение
       await tx.wait(1);
-
       btn.innerText = "✅ Сохранено!";
       btn.style.background = "#00FF00";
-      alert(`✅ Успех! Транзакция подтверждена.\nHash: ${tx.hash}`);
+      alert(`✅ Успех! Tx: ${tx.hash}`);
 
     } catch (error) {
       console.error("Tx error:", error);
-
-      btn.innerText = "❌ Ошибка";
+      btn.innerText = "🔗 Сохранить в блокчейн Base"; 
       btn.disabled = false;
 
-      // Получаем понятный текст ошибки
       let errorMessage = error?.message || "Неизвестная ошибка";
       if (error?.data?.message) errorMessage = error.data.message;
 
@@ -1303,25 +1286,22 @@
     }
   }
 
-  // Функция добавления кнопки (вызывается из showGameOver)
   function addSaveButton() {
       const container = document.querySelector('#gameOverScreen .button-group');
+      if (!container) return;
       if (document.getElementById('saveOnChainBtn')) return;
 
       const btn = document.createElement('button');
       btn.id = "saveOnChainBtn";
       btn.innerText = "🔗 Сохранить в блокчейн Base";
       btn.onclick = sendTransactionToChain;
-      btn.style.background = "#0052FF"; 
+      btn.style.background = "#0052FF";
       btn.style.color = "white";
       btn.style.marginTop = "10px";
 
-      if (container) {
-          container.insertBefore(btn, container.lastElementChild);
-      }
+      container.insertBefore(btn, container.lastElementChild);
   }
 </script>
+
 </body>
 </html>
-
-
