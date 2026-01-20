@@ -1239,7 +1239,7 @@
              await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
          } catch (switchError) {
              btn.disabled = false;
-             btn.innerText = "🔗 Save to Blockchain Base";
+             btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
              alert(`❌ Неверная сеть (ID: ${chainIdHex}). Пожалуйста, переключи кошелек на Base Mainnet.`);
              return;
          }
@@ -1248,7 +1248,7 @@
       const code = await provider.getCode(CONTRACT_ADDRESS);
       if (!code || code === "0x") {
         btn.disabled = false;
-        btn.innerText = "🔗 Save to Blockchain Base";
+        btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
         alert(`❌ By address ${CONTRACT_ADDRESS} No contract. Check the deployment address and network.`);
         return;
       }
@@ -1272,7 +1272,7 @@
 
     } catch (error) {
       console.error("Tx error:", error);
-      btn.innerText = "🔗 Save to Blockchain Base"; 
+      btn.innerText = "🔗 SAVE YOUR PROGRESS !!!"; 
       btn.disabled = false;
 
       let errorMessage = error?.message || "Неизвестная ошибка";
@@ -1293,7 +1293,7 @@
 
       const btn = document.createElement('button');
       btn.id = "saveOnChainBtn";
-      btn.innerText = "🔗 Save to Blockchain Base";
+      btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
       btn.onclick = sendTransactionToChain;
       btn.style.background = "#0052FF";
       btn.style.color = "white";
