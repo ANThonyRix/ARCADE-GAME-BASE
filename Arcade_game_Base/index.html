@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://arcade-game-topaz.vercel.app/image.png","button":{"title":"Play Game 🚀","action":{"type":"launch_frame","name":"Arcade Game Base","url":"https://arcade-game-topaz.vercel.app","splashImageUrl":"https://arcade-game-topaz.vercel.app/image.png","splashBackgroundColor":"#000000"}}}' />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
@@ -9,13 +8,36 @@
     <meta property="og:title" content="Arcade Game Base">
     <meta property="og:description" content="Deliver transaction in 1 second!">
     <meta property="og:image" content="https://arcade-game-topaz.vercel.app/image.png">
-    
+    <meta name="fc:frame" content="vNext">
     <meta name="fc:frame:image" content="https://arcade-game-topaz.vercel.app/image.png">
     <meta name="fc:frame:button:1" content="Play Game 🚀">
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-<style>
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+
+    <script>
+        window.addEventListener('load', () => {
+            console.log("Страница загружена, ищем SDK...");
+
+            // В документации сказано: доступ через глобальный объект 'miniapp'
+            if (window.miniapp && window.miniapp.sdk) {
+                console.log("✅ SDK найден (window.miniapp.sdk)");
+                
+                try {
+                    // Единственно верный вызов для Mini Apps
+                    window.miniapp.sdk.actions.ready();
+                    console.log("🚀 Команда ready() успешно отправлена!");
+                } catch (e) {
+                    console.error("❌ Ошибка при вызове ready:", e);
+                }
+            } else {
+                console.error("❌ Критическая ошибка: Объект 'miniapp' не найден. Скрипт SDK не загрузился.");
+            }
+        });
+    </script>
+
+    <style>
         /* === ВАШИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) === */
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -79,18 +101,6 @@
         .leaderboard-name { flex-grow: 1; text-align: left; padding: 0 15px; }
         .leaderboard-score { font-weight: bold; color: #FFD700; font-size: 18px; }
     </style>
-
-    <!-- Farcaster SDK (ESM) -->
-    <script type="module">
-        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-
-        // Expose sdk to global scope for other scripts
-        window.sdk = sdk;
-
-        sdk.actions.ready();
-        console.log("🚀 Farcaster SDK Ready (ESM)");
-    </script>
-
 </head>
 <body>
     <div id="gameContainer">
@@ -1066,7 +1076,6 @@
             document.getElementById('highScore').textContent = Math.floor(highScore);
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
-            addSaveButton();
             
             saveToLeaderboard(Math.floor(score));
         }
@@ -1208,65 +1217,75 @@
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
-    // Check for SDK in window.sdk (ESM) or window.miniapp.sdk (Legacy)
-    const farcasterSdk = window.sdk || window.miniapp?.sdk;
+    // Получаем провайдер из глобального объекта SDK (который мы экспортировали в module script)
+    // Или пробуем найти его в старом месте window.miniapp
+    const provider = window.sdk?.wallet?.ethProvider || window.miniapp?.sdk?.wallet?.ethProvider;
 
-    if (!farcasterSdk?.wallet?.ethProvider) {
-      alert("❌ Wallet not found. Open the game inside Farcaster.");
+    if (!provider) {
+      alert("❌ Ошибка: Провайдер кошелька не найден. Убедитесь, что открыли игру внутри Farcaster.");
+      console.error("SDK Provider not found. window.sdk:", window.sdk);
       return;
     }
 
     try {
       btn.disabled = true;
-      btn.innerText = "⏳ Checking...";
+      btn.innerText = "⏳ Подключение...";
 
-      const provider = new ethers.providers.Web3Provider(farcasterSdk.wallet.ethProvider);
+      // Используем Web3Provider
+      const web3Provider = new ethers.providers.Web3Provider(provider);
 
-      // Попытка проверить сеть
+      // Запрашиваем аккаунты явно
+      btn.innerText = "⏳ Запрос аккаунта...";
+      const accounts = await web3Provider.send("eth_requestAccounts", []);
+
+      if (!accounts || accounts.length === 0) {
+          throw new Error("Нет доступных аккаунтов");
+      }
+
+      btn.innerText = "⏳ Проверка сети...";
+      // Проверка сети (без блокировки)
       try {
-          const network = await provider.getNetwork();
+          const network = await web3Provider.getNetwork();
+          console.log("Network:", network);
           if (network.chainId !== 8453) {
              try {
-                 await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
-             } catch (e) { console.warn("Switch chain failed:", e); }
+                 await web3Provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
+             } catch (e) { console.warn("Switch failed:", e); }
           }
-      } catch (e) { console.warn("Network check failed:", e); }
+      } catch (e) { console.warn("Network check skipped:", e); }
 
-      btn.innerText = "⏳ Signing...";
-
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
+      btn.innerText = "⏳ Подписание...";
+      const signer = web3Provider.getSigner();
 
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const cleanDistance = Math.floor(distance);
 
+      // Отправка с лимитом газа
       const tx = await contract.saveRecord(score, cleanDistance, {
           gasLimit: 500000 
       });
 
-      btn.innerText = "⏳ Sending...";
+      btn.innerText = "⏳ Отправка...";
       await tx.wait(1);
 
-      btn.innerText = "✅ Saved!";
+      btn.innerText = "✅ Сохранено!";
       btn.style.background = "#00FF00";
-      alert(`✅ Success! Tx: ${tx.hash}`);
+      alert(`✅ Успех! Транзакция отправлена: ${tx.hash}`);
 
     } catch (error) {
       console.error("Tx error:", error);
       btn.innerText = "🔗 Save to Base Blockchain"; 
       btn.disabled = false;
 
-      let errorMessage = error?.message || "Unknown error";
-      if (error?.data?.message) errorMessage = error.data.message;
+      let msg = error?.message || "Unknown error";
+      if (error?.data?.message) msg = error.data.message;
 
-      if (errorMessage.includes("rejected") || error?.code === 4001) {
-         alert("❌ You cancelled the transaction.");
+      if (msg.includes("rejected") || error?.code === 4001) {
+         alert("❌ Отменено пользователем");
+      } else if (msg.includes("insufficient funds")) {
+         alert("❌ Ошибка: Недостаточно ETH на Base для газа");
       } else {
-         if (errorMessage.includes("insufficient funds")) {
-             alert("❌ Error: Not enough ETH on Base.");
-         } else {
-             alert(`❌ Error: ${errorMessage}`);
-         }
+         alert(`❌ Ошибка: ${msg}`);
       }
     }
   }
@@ -1283,6 +1302,9 @@
       btn.style.background = "#0052FF";
       btn.style.color = "white";
       btn.style.marginTop = "10px";
+
+      // Делаем кнопку активной явно
+      btn.disabled = false;
 
       container.insertBefore(btn, container.lastElementChild);
   }
