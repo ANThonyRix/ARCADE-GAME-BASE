@@ -1217,8 +1217,6 @@
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
-    // Получаем провайдер из глобального объекта SDK (который мы экспортировали в module script)
-    // Или пробуем найти его в старом месте window.miniapp
     const provider = window.sdk?.wallet?.ethProvider || window.miniapp?.sdk?.wallet?.ethProvider;
 
     if (!provider) {
@@ -1231,10 +1229,8 @@
       btn.disabled = true;
       btn.innerText = "⏳ Подключение...";
 
-      // Используем Web3Provider
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
-      // Запрашиваем аккаунты явно
       btn.innerText = "⏳ Запрос аккаунта...";
       const accounts = await web3Provider.send("eth_requestAccounts", []);
 
@@ -1243,7 +1239,6 @@
       }
 
       btn.innerText = "⏳ Проверка сети...";
-      // Проверка сети (без блокировки)
       try {
           const network = await web3Provider.getNetwork();
           console.log("Network:", network);
@@ -1260,7 +1255,6 @@
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const cleanDistance = Math.floor(distance);
 
-      // Отправка с лимитом газа
       const tx = await contract.saveRecord(score, cleanDistance, {
           gasLimit: 500000 
       });
@@ -1291,22 +1285,15 @@
   }
 
   function addSaveButton() {
-      const container = document.querySelector('#gameOverScreen .button-group');
-      if (!container) return;
-      if (document.getElementById('saveOnChainBtn')) return;
-
-      const btn = document.createElement('button');
-      btn.id = "saveOnChainBtn";
-      btn.innerText = "🔗 Save to Base Blockchain";
-      btn.onclick = sendTransactionToChain;
-      btn.style.background = "#0052FF";
-      btn.style.color = "white";
-      btn.style.marginTop = "10px";
-
-      // Делаем кнопку активной явно
-      btn.disabled = false;
-
-      container.insertBefore(btn, container.lastElementChild);
+      const btn = document.getElementById('saveOnChainBtn');
+      if (btn) {
+          btn.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = "🔗 Save to Base Blockchain";
+          btn.style.background = "#0052FF";
+      } else {
+          console.error("Critical: saveOnChainBtn not found in DOM");
+      }
   }
 </script>
 </body>
