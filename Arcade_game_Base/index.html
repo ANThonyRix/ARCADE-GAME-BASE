@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-
-    <script type="module">
-        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-        window.sdk = sdk; // Make it global
-        sdk.actions.ready();
-    </script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
@@ -21,7 +14,7 @@
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-    
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
 
     <script>
         window.addEventListener('load', () => {
@@ -230,6 +223,9 @@
                 <p>🏆 Best Score: <span id="finalHighScore">0</span></p>
             </div>
             <div class="button-group">
+                
+            <button id="saveOnChainBtn" style="display: none; background: #0052FF; color: white; margin-top: 10px;" onclick="sendTransactionToChain()">🔗 Save to Base Blockchain</button>
+
                 <button onclick="restartGame()">🔄 New Transaction</button>
                 <button onclick="showShop()">🛒 Upgrades Shop</button>
                 <button onclick="backToMenu()">🏠 Main Menu</button>
@@ -1083,7 +1079,7 @@
             document.getElementById('highScore').textContent = Math.floor(highScore);
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
-            if(window.addSaveButton) window.addSaveButton();
+            document.getElementById('saveOnChainBtn').style.display = 'block';
             
             saveToLeaderboard(Math.floor(score));
         }
@@ -1223,39 +1219,23 @@
       "function saveRecord(uint256 score, uint256 distance) external"
   ];
 
-  // Function to add the button dynamically
-  window.addSaveButton = function() {
-      console.log("Adding save button...");
-      const container = document.querySelector('#gameOverScreen .button-group');
-      if (!container) {
-          console.error("Button group not found in gameOverScreen");
-          return;
-      }
-
-      // Check if button already exists
-      if (document.getElementById('saveOnChainBtn')) return;
-
-      const btn = document.createElement('button');
-      btn.id = "saveOnChainBtn";
-      btn.innerText = "🔗 Save to Base Blockchain";
-      btn.style.background = "#0052FF";
-      btn.style.color = "white";
-      btn.style.marginTop = "10px";
-      btn.onclick = sendTransactionToChain;
-
-      // Insert as the first button or append
-      // Let's prepend it for visibility
-      container.insertBefore(btn, container.firstChild);
-  };
-
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
-    // Try to get provider from window.sdk (ESM) or legacy
-    const provider = window.sdk?.wallet?.ethProvider || window.miniapp?.sdk?.wallet?.ethProvider;
+    // Lazy load provider
+    let provider = null;
+    try {
+        if (window.sdk && window.sdk.wallet && window.sdk.wallet.ethProvider) {
+            provider = window.sdk.wallet.ethProvider;
+        } else if (window.miniapp && window.miniapp.sdk && window.miniapp.sdk.wallet) {
+            provider = window.miniapp.sdk.wallet.ethProvider;
+        } else if (window.ethereum) {
+             provider = window.ethereum; // Fallback for testing
+        }
+    } catch (e) { console.error(e); }
 
     if (!provider) {
-      alert("❌ Wallet provider not found. Please open in Farcaster.");
+      alert("❌ Wallet provider not found. Please open in Farcaster Mobile.");
       return;
     }
 
@@ -1265,15 +1245,15 @@
 
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
-      // Request accounts
+      // Force request accounts
       await web3Provider.send("eth_requestAccounts", []);
 
       const signer = web3Provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-      // Ensure variables exist (score, distance are global in your game)
-      const finalScore = Math.floor(window.score || 0);
-      const finalDistance = Math.floor(window.distance || 0);
+      // Get values from global scope
+      const finalScore = Math.floor(window.score || score || 0);
+      const finalDistance = Math.floor(window.distance || distance || 0);
 
       btn.innerText = "⏳ Sending...";
 
@@ -1291,7 +1271,15 @@
       console.error(error);
       btn.innerText = "🔗 Save to Base Blockchain"; 
       btn.disabled = false;
-      alert("Error: " + (error.message || error));
+
+      let msg = error.message || error;
+      if (error.data && error.data.message) msg = error.data.message;
+
+      if (msg.includes("rejected")) {
+          alert("Cancelled by user");
+      } else {
+          alert("Error: " + msg);
+      }
     }
   }
 </script>
