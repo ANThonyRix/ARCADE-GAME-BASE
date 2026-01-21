@@ -15,30 +15,7 @@
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
-
-    <script>
-        window.addEventListener('load', () => {
-            console.log("Страница загружена, ищем SDK...");
-
-            // В документации сказано: доступ через глобальный объект 'miniapp'
-            if (window.miniapp && window.miniapp.sdk) {
-                console.log("✅ SDK найден (window.miniapp.sdk)");
-                
-                try {
-                    // Единственно верный вызов для Mini Apps
-                    window.miniapp.sdk.actions.ready();
-                    console.log("🚀 Команда ready() успешно отправлена!");
-                } catch (e) {
-                    console.error("❌ Ошибка при вызове ready:", e);
-                }
-            } else {
-                console.error("❌ Критическая ошибка: Объект 'miniapp' не найден. Скрипт SDK не загрузился.");
-            }
-        });
-    </script>
-
-    <style>
+<style>
         /* === ВАШИ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) === */
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -102,6 +79,18 @@
         .leaderboard-name { flex-grow: 1; text-align: left; padding: 0 15px; }
         .leaderboard-score { font-weight: bold; color: #FFD700; font-size: 18px; }
     </style>
+
+    <!-- Farcaster SDK (ESM) -->
+    <script type="module">
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+
+        // Expose sdk to global scope for other scripts
+        window.sdk = sdk;
+
+        sdk.actions.ready();
+        console.log("🚀 Farcaster SDK Ready (ESM)");
+    </script>
+
 </head>
 <body>
     <div id="gameContainer">
@@ -1077,6 +1066,7 @@
             document.getElementById('highScore').textContent = Math.floor(highScore);
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
+            addSaveButton();
             
             saveToLeaderboard(Math.floor(score));
         }
@@ -1218,7 +1208,10 @@
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
-    if (!window.miniapp?.sdk?.wallet?.ethProvider) {
+    // Check for SDK in window.sdk (ESM) or window.miniapp.sdk (Legacy)
+    const farcasterSdk = window.sdk || window.miniapp?.sdk;
+
+    if (!farcasterSdk?.wallet?.ethProvider) {
       alert("❌ Wallet not found. Open the game inside Farcaster.");
       return;
     }
@@ -1227,17 +1220,17 @@
       btn.disabled = true;
       btn.innerText = "⏳ Checking...";
 
-      const provider = new ethers.providers.Web3Provider(window.miniapp.sdk.wallet.ethProvider);
+      const provider = new ethers.providers.Web3Provider(farcasterSdk.wallet.ethProvider);
 
-      // Попытка проверить сеть (без фанатизма, чтобы не ломать мобилки)
+      // Попытка проверить сеть
       try {
           const network = await provider.getNetwork();
           if (network.chainId !== 8453) {
              try {
                  await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
-             } catch (e) { console.warn("Switch chain failed, proceeding anyway..."); }
+             } catch (e) { console.warn("Switch chain failed:", e); }
           }
-      } catch (e) { console.warn("Network check failed, proceeding anyway..."); }
+      } catch (e) { console.warn("Network check failed:", e); }
 
       btn.innerText = "⏳ Signing...";
 
@@ -1247,11 +1240,8 @@
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const cleanDistance = Math.floor(distance);
 
-      // ВАЖНО: Мы больше не делаем await contract.estimateGas(...)
-      // Мы сразу отправляем транзакцию с жестким лимитом газа.
-
       const tx = await contract.saveRecord(score, cleanDistance, {
-          gasLimit: 500000 // Ставим с запасом, неиспользованный газ вернется
+          gasLimit: 500000 
       });
 
       btn.innerText = "⏳ Sending...";
@@ -1272,9 +1262,8 @@
       if (errorMessage.includes("rejected") || error?.code === 4001) {
          alert("❌ You cancelled the transaction.");
       } else {
-         // Часто ошибка "insufficient funds" прячется здесь
          if (errorMessage.includes("insufficient funds")) {
-             alert("❌ Error: Not enough ETH on Base to pay for gas.");
+             alert("❌ Error: Not enough ETH on Base.");
          } else {
              alert(`❌ Error: ${errorMessage}`);
          }
