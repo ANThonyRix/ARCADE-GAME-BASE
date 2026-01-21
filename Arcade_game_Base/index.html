@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://arcade-game-topaz.vercel.app/image.png","button":{"title":"Play Game 🚀","action":{"type":"launch_frame","name":"Arcade Game Base","url":"https://arcade-game-topaz.vercel.app","splashImageUrl":"https://arcade-game-topaz.vercel.app/image.png","splashBackgroundColor":"#000000"}}}' />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
@@ -8,7 +9,7 @@
     <meta property="og:title" content="Arcade Game Base">
     <meta property="og:description" content="Deliver transaction in 1 second!">
     <meta property="og:image" content="https://arcade-game-topaz.vercel.app/image.png">
-    <meta name="fc:frame" content="vNext">
+    
     <meta name="fc:frame:image" content="https://arcade-game-topaz.vercel.app/image.png">
     <meta name="fc:frame:button:1" content="Play Game 🚀">
     <meta name="fc:frame:button:1:action" content="link">
@@ -18,21 +19,21 @@
 
     <script>
         window.addEventListener('load', () => {
-            console.log("Страница загружена, ищем SDK...");
+            console.log("The page is loaded, let's look for the SDK...");
 
             // В документации сказано: доступ через глобальный объект 'miniapp'
             if (window.miniapp && window.miniapp.sdk) {
-                console.log("✅ SDK найден (window.miniapp.sdk)");
+                console.log("✅ SDK found (window.miniapp.sdk)");
                 
                 try {
                     // Единственно верный вызов для Mini Apps
                     window.miniapp.sdk.actions.ready();
-                    console.log("🚀 Команда ready() успешно отправлена!");
+                    console.log("🚀 The ready() command was sent successfully!");
                 } catch (e) {
-                    console.error("❌ Ошибка при вызове ready:", e);
+                    console.error("❌ Error calling ready:", e);
                 }
             } else {
-                console.error("❌ Критическая ошибка: Объект 'miniapp' не найден. Скрипт SDK не загрузился.");
+                console.error("❌ Critical error: Object 'miniapp' not found. SDK script failed to load");
             }
         });
     </script>
@@ -223,9 +224,6 @@
                 <p>🏆 Best Score: <span id="finalHighScore">0</span></p>
             </div>
             <div class="button-group">
-                
-            <button id="saveOnChainBtn" style="display: none; background: #0052FF; color: white; margin-top: 10px;" onclick="sendTransactionToChain()">🔗 Save to Base Blockchain</button>
-
                 <button onclick="restartGame()">🔄 New Transaction</button>
                 <button onclick="showShop()">🛒 Upgrades Shop</button>
                 <button onclick="backToMenu()">🏠 Main Menu</button>
@@ -1079,7 +1077,7 @@
             document.getElementById('highScore').textContent = Math.floor(highScore);
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
-            document.getElementById('saveOnChainBtn').style.display = 'block';
+            addSaveButton();
             
             saveToLeaderboard(Math.floor(score));
         }
@@ -1211,10 +1209,12 @@
         resizeCanvas();
     </script>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 <script>
   // ⚙️ ВСТАВЬТЕ ВАШ АДРЕС НИЖЕ ВНУТРИ КАВЫЧЕК
-  const CONTRACT_ADDRESS = "0xdb68CeBcF6D1f82b976fd21024aaE0ef30B8C18a"; 
+  const CONTRACT_ADDRESS = "0xdb68CeBcF6D1f82b976fd21024aaE0ef30B8C18a"; // <-- СЮДА (например: "0x4ed7...")
 
+  // ABI (описание функции контракта)
   const CONTRACT_ABI = [
       "function saveRecord(uint256 score, uint256 distance) external"
   ];
@@ -1222,65 +1222,84 @@
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
-    // Lazy load provider
-    let provider = null;
-    try {
-        if (window.sdk && window.sdk.wallet && window.sdk.wallet.ethProvider) {
-            provider = window.sdk.wallet.ethProvider;
-        } else if (window.miniapp && window.miniapp.sdk && window.miniapp.sdk.wallet) {
-            provider = window.miniapp.sdk.wallet.ethProvider;
-        } else if (window.ethereum) {
-             provider = window.ethereum; // Fallback for testing
-        }
-    } catch (e) { console.error(e); }
-
-    if (!provider) {
-      alert("❌ Wallet provider not found. Please open in Farcaster Mobile.");
+    if (!window.miniapp?.sdk?.wallet?.ethProvider) {
+      alert("❌ Wallet not found. Open the game in Farcaster");
       return;
     }
 
     try {
       btn.disabled = true;
-      btn.innerText = "⏳ Connecting...";
+      btn.innerText = "⏳ Verification...";
 
-      const web3Provider = new ethers.providers.Web3Provider(provider);
+      const provider = new ethers.providers.Web3Provider(window.miniapp.sdk.wallet.ethProvider);
 
-      // Force request accounts
-      await web3Provider.send("eth_requestAccounts", []);
+      const chainIdHex = await provider.send("eth_chainId", []);
+      if (chainIdHex !== "0x2105") {
+         try {
+             await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
+         } catch (switchError) {
+             btn.disabled = false;
+             btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
+             alert(`❌ Неверная сеть (ID: ${chainIdHex}). Пожалуйста, переключи кошелек на Base Mainnet.`);
+             return;
+         }
+      }
 
-      const signer = web3Provider.getSigner();
+      const code = await provider.getCode(CONTRACT_ADDRESS);
+      if (!code || code === "0x") {
+        btn.disabled = false;
+        btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
+        alert(`❌ By address ${CONTRACT_ADDRESS} No contract. Check the deployment address and network.`);
+        return;
+      }
+
+      btn.innerText = "⏳ Let's sign...";
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-      // Get values from global scope
-      const finalScore = Math.floor(window.score || score || 0);
-      const finalDistance = Math.floor(window.distance || distance || 0);
+      const cleanDistance = Math.floor(distance);
 
+      await contract.estimateGas.saveRecord(score, cleanDistance);
+
+      const tx = await contract.saveRecord(score, cleanDistance);
       btn.innerText = "⏳ Sending...";
 
-      const tx = await contract.saveRecord(finalScore, finalDistance, {
-          gasLimit: 500000
-      });
-
       await tx.wait(1);
-
       btn.innerText = "✅ Saved!";
       btn.style.background = "#00FF00";
-      alert("Transaction successful! Hash: " + tx.hash);
+      alert(`✅ Успех! Tx: ${tx.hash}`);
 
     } catch (error) {
-      console.error(error);
-      btn.innerText = "🔗 Save to Base Blockchain"; 
+      console.error("Tx error:", error);
+      btn.innerText = "🔗 SAVE YOUR PROGRESS !!!"; 
       btn.disabled = false;
 
-      let msg = error.message || error;
-      if (error.data && error.data.message) msg = error.data.message;
+      let errorMessage = error?.message || "Неизвестная ошибка";
+      if (error?.data?.message) errorMessage = error.data.message;
 
-      if (msg.includes("rejected")) {
-          alert("Cancelled by user");
+      if (error?.code === 4001) {
+        alert("❌ You have cancelled the transaction signing");
       } else {
-          alert("Error: " + msg);
+        alert(`❌ Error: ${errorMessage}`);
       }
     }
+  }
+
+  function addSaveButton() {
+      const container = document.querySelector('#gameOverScreen .button-group');
+      if (!container) return;
+      if (document.getElementById('saveOnChainBtn')) return;
+
+      const btn = document.createElement('button');
+      btn.id = "saveOnChainBtn";
+      btn.innerText = "🔗 SAVE YOUR PROGRESS !!!";
+      btn.onclick = sendTransactionToChain;
+      btn.style.background = "#0052FF";
+      btn.style.color = "white";
+      btn.style.marginTop = "10px";
+
+      container.insertBefore(btn, container.lastElementChild);
   }
 </script>
 
