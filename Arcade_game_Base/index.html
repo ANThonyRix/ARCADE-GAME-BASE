@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+
+    <script type="module">
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+        window.sdk = sdk; // Make it global
+        sdk.actions.ready();
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arcade Game Base</title>
@@ -14,7 +21,7 @@
     <meta name="fc:frame:button:1:action" content="link">
     <meta name="fc:frame:button:1:target" content="https://arcade-game-topaz.vercel.app">
 
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+    
 
     <script>
         window.addEventListener('load', () => {
@@ -1076,6 +1083,7 @@
             document.getElementById('highScore').textContent = Math.floor(highScore);
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
+            if(window.addSaveButton) window.addSaveButton();
             
             saveToLeaderboard(Math.floor(score));
         }
@@ -1206,6 +1214,7 @@
         // Initial resize
         resizeCanvas();
     </script>
+
 <script>
   // ⚙️ ВСТАВЬТЕ ВАШ АДРЕС НИЖЕ ВНУТРИ КАВЫЧЕК
   const CONTRACT_ADDRESS = "0xdb68CeBcF6D1f82b976fd21024aaE0ef30B8C18a"; 
@@ -1214,87 +1223,78 @@
       "function saveRecord(uint256 score, uint256 distance) external"
   ];
 
+  // Function to add the button dynamically
+  window.addSaveButton = function() {
+      console.log("Adding save button...");
+      const container = document.querySelector('#gameOverScreen .button-group');
+      if (!container) {
+          console.error("Button group not found in gameOverScreen");
+          return;
+      }
+
+      // Check if button already exists
+      if (document.getElementById('saveOnChainBtn')) return;
+
+      const btn = document.createElement('button');
+      btn.id = "saveOnChainBtn";
+      btn.innerText = "🔗 Save to Base Blockchain";
+      btn.style.background = "#0052FF";
+      btn.style.color = "white";
+      btn.style.marginTop = "10px";
+      btn.onclick = sendTransactionToChain;
+
+      // Insert as the first button or append
+      // Let's prepend it for visibility
+      container.insertBefore(btn, container.firstChild);
+  };
+
   async function sendTransactionToChain() {
     const btn = document.getElementById('saveOnChainBtn');
 
+    // Try to get provider from window.sdk (ESM) or legacy
     const provider = window.sdk?.wallet?.ethProvider || window.miniapp?.sdk?.wallet?.ethProvider;
 
     if (!provider) {
-      alert("❌ Ошибка: Провайдер кошелька не найден. Убедитесь, что открыли игру внутри Farcaster.");
-      console.error("SDK Provider not found. window.sdk:", window.sdk);
+      alert("❌ Wallet provider not found. Please open in Farcaster.");
       return;
     }
 
     try {
       btn.disabled = true;
-      btn.innerText = "⏳ Подключение...";
+      btn.innerText = "⏳ Connecting...";
 
       const web3Provider = new ethers.providers.Web3Provider(provider);
 
-      btn.innerText = "⏳ Запрос аккаунта...";
-      const accounts = await web3Provider.send("eth_requestAccounts", []);
+      // Request accounts
+      await web3Provider.send("eth_requestAccounts", []);
 
-      if (!accounts || accounts.length === 0) {
-          throw new Error("Нет доступных аккаунтов");
-      }
-
-      btn.innerText = "⏳ Проверка сети...";
-      try {
-          const network = await web3Provider.getNetwork();
-          console.log("Network:", network);
-          if (network.chainId !== 8453) {
-             try {
-                 await web3Provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
-             } catch (e) { console.warn("Switch failed:", e); }
-          }
-      } catch (e) { console.warn("Network check skipped:", e); }
-
-      btn.innerText = "⏳ Подписание...";
       const signer = web3Provider.getSigner();
-
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      const cleanDistance = Math.floor(distance);
 
-      const tx = await contract.saveRecord(score, cleanDistance, {
-          gasLimit: 500000 
+      // Ensure variables exist (score, distance are global in your game)
+      const finalScore = Math.floor(window.score || 0);
+      const finalDistance = Math.floor(window.distance || 0);
+
+      btn.innerText = "⏳ Sending...";
+
+      const tx = await contract.saveRecord(finalScore, finalDistance, {
+          gasLimit: 500000
       });
 
-      btn.innerText = "⏳ Отправка...";
       await tx.wait(1);
 
-      btn.innerText = "✅ Сохранено!";
+      btn.innerText = "✅ Saved!";
       btn.style.background = "#00FF00";
-      alert(`✅ Успех! Транзакция отправлена: ${tx.hash}`);
+      alert("Transaction successful! Hash: " + tx.hash);
 
     } catch (error) {
-      console.error("Tx error:", error);
+      console.error(error);
       btn.innerText = "🔗 Save to Base Blockchain"; 
       btn.disabled = false;
-
-      let msg = error?.message || "Unknown error";
-      if (error?.data?.message) msg = error.data.message;
-
-      if (msg.includes("rejected") || error?.code === 4001) {
-         alert("❌ Отменено пользователем");
-      } else if (msg.includes("insufficient funds")) {
-         alert("❌ Ошибка: Недостаточно ETH на Base для газа");
-      } else {
-         alert(`❌ Ошибка: ${msg}`);
-      }
+      alert("Error: " + (error.message || error));
     }
   }
-
-  function addSaveButton() {
-      const btn = document.getElementById('saveOnChainBtn');
-      if (btn) {
-          btn.style.display = 'block';
-          btn.disabled = false;
-          btn.innerText = "🔗 Save to Base Blockchain";
-          btn.style.background = "#0052FF";
-      } else {
-          console.error("Critical: saveOnChainBtn not found in DOM");
-      }
-  }
 </script>
+
 </body>
 </html>
